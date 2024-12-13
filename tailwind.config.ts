@@ -9,8 +9,14 @@ export default {
   theme: {
     extend: {
       colors: {
+        default: "#242526",
+        main: "lightgreen",
         background: "var(--background)",
         foreground: "var(--foreground)",
+      },
+      textColor: {
+        primary: "#242526",
+        contrast: "#ffffff",
       },
     },
   },
