@@ -1,5 +1,9 @@
 "use server";
-export async function createRouteAction(state: unknown, formData: FormData) {
+
+import { revalidateTag } from "next/cache";
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function createRouteAction(state: any, formData: FormData) {
   const { sourceId, destinationId } = Object.fromEntries(formData);
 
   const directionsResponse = await fetch(
@@ -35,5 +39,7 @@ export async function createRouteAction(state: unknown, formData: FormData) {
   if (!response.ok) {
     return { error: "Failed to create route" };
   }
+
+  revalidateTag("routes");
   return { success: true };
 }
