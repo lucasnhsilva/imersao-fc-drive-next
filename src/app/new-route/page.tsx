@@ -1,49 +1,19 @@
-export async function createRouteAction(formData: FormData) {
-  "use server";
+import NewRouteForm from "./NewRouteForm";
 
-  const { sourceId, destinationId } = Object.fromEntries(formData);
-
-  const directionsResponse = await fetch(
-    `http://localhost:3000/directions?originId=${sourceId}&destinationId=${destinationId}`
-  );
-
-  if (!directionsResponse.ok) {
-    throw new Error("Failed to fetch directions data");
-  }
-
-  const directionsData = await directionsResponse.json();
-
-  const startAddress = directionsData.routes[0].legs[0].start_address;
-  const endAddress = directionsData.routes[0].legs[0].end_address;
-
-  const payload = {
-    name: `${startAddress} | ${endAddress}`,
-    source_id: directionsData.request.origin.place_id.replace("place_id:", ""),
-    destination_id: directionsData.request.destination.place_id.replace(
-      "place_id:",
-      ""
-    ),
-  };
-
-  console.log(payload);
-
-  const response = await fetch("http://localhost:3000/routes", {
-    method: "POST",
-    body: JSON.stringify(payload),
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to create route");
-  }
-}
-
-export async function SearchDirections(source: string, destination: string) {
+export async function searchDirections(source: string, destination: string) {
   const [sourceResponse, destinationResponse] = await Promise.all([
-    fetch(`http://localhost:3000/places?text=${source}`),
-    fetch(`http://localhost:3000/places?text=${destination}`),
+    fetch(`http://localhost:3000/places?text=${source}`, {
+      cache: "force-cache",
+      next: {
+        revalidate: 24 * 3600,
+      },
+    }),
+    fetch(`http://localhost:3000/places?text=${destination}`, {
+      cache: "force-cache",
+      next: {
+        revalidate: 24 * 3600,
+      },
+    }),
   ]);
 
   if (!sourceResponse.ok) {
@@ -63,7 +33,13 @@ export async function SearchDirections(source: string, destination: string) {
   const destinationPlaceId = destinationData.candidates[0].place_id;
 
   const directionsResponse = await fetch(
-    `http://localhost:3000/directions?originId=${sourcePlaceId}&destinationId=${destinationPlaceId}`
+    `http://localhost:3000/directions?originId=${sourcePlaceId}&destinationId=${destinationPlaceId}`,
+    {
+      cache: "force-cache",
+      next: {
+        revalidate: 24 * 3600,
+      },
+    }
   );
 
   if (!directionsResponse.ok) {
@@ -87,7 +63,7 @@ export async function NewRoutePage({
   const { source, destination } = await searchParams;
 
   const result =
-    source && destination ? await SearchDirections(source, destination) : null;
+    source && destination ? await searchDirections(source, destination) : null;
 
   let directionsData = null;
   let sourcePlaceId = null;
@@ -163,7 +139,7 @@ export async function NewRoutePage({
                 {directionsData.routes[0].legs[0].duration.text}
               </li>
             </ul>
-            <form action={createRouteAction}>
+            <NewRouteForm>
               {sourcePlaceId && (
                 <input
                   type="hidden"
@@ -180,11 +156,11 @@ export async function NewRoutePage({
               )}
               <button
                 type="submit"
-                className="bg-main text-primary p-2 rounded text-xl font-bold"
+                className="bg-main text-primary p-2 rounded text-xl font-bold mt-4"
               >
                 Adicionar rota
               </button>
-            </form>
+            </NewRouteForm>
           </div>
         )}
       </div>

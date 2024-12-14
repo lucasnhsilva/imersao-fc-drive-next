@@ -13,6 +13,8 @@ export default {
         main: "lightgreen",
         background: "var(--background)",
         foreground: "var(--foreground)",
+        error: "darkred",
+        success: "darkgreen",
       },
       textColor: {
         primary: "#242526",
